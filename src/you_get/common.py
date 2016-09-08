@@ -8,6 +8,7 @@ SITES = {
     'baidu'            : 'baidu',
     'bandcamp'         : 'bandcamp',
     'baomihua'         : 'baomihua',
+    'bigthink'         : 'bigthink',
     'bilibili'         : 'bilibili',
     'cctv'             : 'cntv',
     'cntv'             : 'cntv',
@@ -78,6 +79,7 @@ SITES = {
     'videomega'        : 'videomega',
     'vidto'            : 'vidto',
     'vimeo'            : 'vimeo',
+    'wanmen'           : 'wanmen',
     'weibo'            : 'miaopai',
     'veoh'             : 'veoh',
     'vine'             : 'vine',
@@ -909,8 +911,7 @@ def download_url_ffmpeg(url,title, ext,params={}, total_size=0, output_dir='.', 
         return
 
     if player:
-        from .processor.ffmpeg import ffmpeg_play_stream
-        ffmpeg_play_stream(player, url, params)
+        launch_player(player, [url])
         return
 
     from .processor.ffmpeg import has_ffmpeg_installed, ffmpeg_download_stream
@@ -1044,6 +1045,22 @@ def set_http_proxy(proxy):
         proxy_support = request.ProxyHandler({'http': '%s' % proxy, 'https': '%s' % proxy})
     opener = request.build_opener(proxy_support)
     request.install_opener(opener)
+
+def print_more_compatible(*args, **kwargs):
+    import builtins as __builtin__
+    """Overload default print function as py (<3.3) does not support 'flush' keyword.
+    Although the function name can be same as print to get itself overloaded automatically,
+    I'd rather leave it with a different name and only overload it when importing to make less confusion. """
+    # nothing happens on py3.3 and later
+    if sys.version_info[:2] >= (3, 3):
+        return __builtin__.print(*args, **kwargs)
+
+    # in lower pyver (e.g. 3.2.x), remove 'flush' keyword and flush it as requested
+    doFlush = kwargs.pop('flush', False)
+    ret = __builtin__.print(*args, **kwargs)
+    if doFlush:
+        kwargs.get('file', sys.stdout).flush()
+    return ret
 
 
 
@@ -1214,15 +1231,18 @@ def script_main(script_name, download, download_playlist, **kwargs):
 
     if (socks_proxy):
         try:
-          import socket
-          import socks
-          socks_proxy_addrs = socks_proxy.split(':')
-          socks.set_default_proxy(socks.SOCKS5, 
-                                  socks_proxy_addrs[0], 
-                                  int(socks_proxy_addrs[1]))
-          socket.socket = socks.socksocket
+            import socket
+            import socks
+            socks_proxy_addrs = socks_proxy.split(':')
+            socks.set_default_proxy(socks.SOCKS5,
+                                    socks_proxy_addrs[0],
+                                    int(socks_proxy_addrs[1]))
+            socket.socket = socks.socksocket
+            def getaddrinfo(*args):
+                return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+            socket.getaddrinfo = getaddrinfo
         except ImportError:
-          log.w('Error importing PySocks library, socks proxy ignored.'
+            log.w('Error importing PySocks library, socks proxy ignored.'
                 'In order to use use socks proxy, please install PySocks.')
     else:
         import socket

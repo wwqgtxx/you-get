@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
 from ..common import *
+from ..common import print_more_compatible as print
 from ..extractor import VideoExtractor
+from ..util import log
+from .. import json_output
+
 from uuid import uuid4
 from random import random,randint
 import json
 from math import floor
 from zlib import decompress
 import hashlib
-from ..util import log
-from .. import json_output
-
 import time
 
 '''

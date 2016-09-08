@@ -5,7 +5,9 @@ from .alive import *
 from .archive import *
 from .baidu import *
 from .bandcamp import *
+from .bigthink import *
 from .bilibili import *
+from .bokecc import *
 from .cbs import *
 from .ckplayer import *
 from .cntv import *
@@ -72,6 +74,7 @@ from .vimeo import *
 from .vine import *
 from .vk import *
 from .w56 import *
+from .wanmen import *
 from .xiami import *
 from .yinyuetai import *
 from .yixia import *
@@ -79,3 +82,4 @@ from .youku import *
 from .youtube import *
 from .ted import *
 from .khan import *
+from .zhanqi import *

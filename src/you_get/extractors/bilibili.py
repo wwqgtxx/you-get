@@ -12,7 +12,7 @@ import hashlib
 import re
 
 appkey = 'f3bb208b3d081dc8'
-
+SECRETKEY_MINILOADER = '1c15888dc316e05a15fdd0a02ed6584f'
 
 def get_srt_xml(id):
     url = 'http://comment.bilibili.com/%s.xml' % id
@@ -67,7 +67,8 @@ def parse_cid_playurl(xml):
 def bilibili_download_by_cids(cids, title, output_dir='.', merge=True, info_only=False):
     urls = []
     for cid in cids:
-        url = 'http://interface.bilibili.com/playurl?appkey=' + appkey + '&cid=' + cid
+        sign_this = hashlib.md5(bytes('cid={cid}&from=miniplay&player=1{SECRETKEY_MINILOADER}'.format(cid = cid, SECRETKEY_MINILOADER = SECRETKEY_MINILOADER), 'utf-8')).hexdigest()
+        url = 'http://interface.bilibili.com/playurl?&cid=' + cid + '&from=miniplay&player=1' + '&sign=' + sign_this
         urls += [i
                  if not re.match(r'.*\.qqvideo\.tc\.qq\.com', i)
                  else re.sub(r'.*\.qqvideo\.tc\.qq\.com', 'http://vsrc.store.qq.com', i)
@@ -85,7 +86,8 @@ def bilibili_download_by_cids(cids, title, output_dir='.', merge=True, info_only
 
 
 def bilibili_download_by_cid(cid, title, output_dir='.', merge=True, info_only=False):
-    url = 'http://interface.bilibili.com/playurl?appkey=' + appkey + '&cid=' + cid
+    sign_this = hashlib.md5(bytes('cid={cid}&from=miniplay&player=1{SECRETKEY_MINILOADER}'.format(cid = cid, SECRETKEY_MINILOADER = SECRETKEY_MINILOADER), 'utf-8')).hexdigest()
+    url = 'http://interface.bilibili.com/playurl?&cid=' + cid + '&from=miniplay&player=1' + '&sign=' + sign_this
     urls = [i
             if not re.match(r'.*\.qqvideo\.tc\.qq\.com', i)
             else re.sub(r'.*\.qqvideo\.tc\.qq\.com', 'http://vsrc.store.qq.com', i)
@@ -93,12 +95,9 @@ def bilibili_download_by_cid(cid, title, output_dir='.', merge=True, info_only=F
 
     type_ = ''
     size = 0
-    try:
-        for url in urls:
-            _, type_, temp = url_info(url)
-            size += temp or 0
-    except error.URLError:
-        log.wtf('[Failed] DNS not resolved. Please change your DNS server settings.')
+    for url in urls:
+        _, type_, temp = url_info(url)
+        size += temp or 0
 
     print_info(site_info, title, type_, size)
     if not info_only:
@@ -125,8 +124,8 @@ def bilibili_download(url, output_dir='.', merge=True, info_only=False, **kwargs
         url = r1(r'"([^"]+)" class="v-av-link"', html)
         html = get_content(url)
 
-    title = r1_of([r'<meta name="title" content="([^<>]{1,999})" />',
-                   r'<h1[^>]*>([^<>]+)</h1>'], html)
+    title = r1_of([r'<meta name="title" content="\s*([^<>]{1,999})\s*" />',
+                   r'<h1[^>]*>\s*([^<>]+)\s*</h1>'], html)
     if title:
         title = unescape_html(title)
         title = escape_file_path(title)
@@ -139,14 +138,14 @@ def bilibili_download(url, output_dir='.', merge=True, info_only=False, **kwargs
     cid = cid.split('&')[0]
     if t == 'cid':
         if re.match(r'https?://live\.bilibili\.com/', url):
-            title = r1(r'<title>([^<>]+)</title>', html)
+            title = r1(r'<title>\s*([^<>]+)\s*</title>', html)
             bilibili_live_download_by_cid(cid, title, output_dir=output_dir, merge=merge, info_only=info_only)
 
         else:
             # multi-P
             cids = []
             pages = re.findall('<option value=\'([^\']*)\'', html)
-            titles = re.findall('<option value=.*>(.+)</option>', html)
+            titles = re.findall('<option value=.*>\s*([^<>]+)\s*</option>', html)
             for i, page in enumerate(pages):
                 html = get_html("http://www.bilibili.com%s" % page)
                 flashvars = r1_of([r'(cid=\d+)',
@@ -163,7 +162,7 @@ def bilibili_download(url, output_dir='.', merge=True, info_only=False, **kwargs
             # no multi-P
             if not pages:
                 cids = [cid]
-                titles = [r1(r'<option value=.* selected>(.+)</option>', html) or title]
+                titles = [r1(r'<option value=.* selected>\s*([^<>]+)\s*</option>', html) or title]
 
             for i in range(len(cids)):
                 bilibili_download_by_cid(cids[i],
