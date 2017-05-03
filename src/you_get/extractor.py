@@ -98,7 +98,7 @@ class VideoExtractor():
         if 'quality' in stream:
             print("      quality:       %s" % stream['quality'])
 
-        if 'size' in stream:
+        if 'size' in stream and stream['container'].lower() != 'm3u8':
             print("      size:          %s MiB (%s bytes)" % (round(stream['size'] / 1048576, 1), stream['size']))
 
         if 'itag' in stream:
@@ -206,7 +206,7 @@ class VideoExtractor():
                           output_dir=kwargs['output_dir'],
                           merge=kwargs['merge'],
                           av=stream_id in self.dash_streams)
-            if not kwargs['caption']:
+            if 'caption' not in kwargs or not kwargs['caption']:
                 print('Skipping captions.')
                 return
             for lang in self.caption_tracks:

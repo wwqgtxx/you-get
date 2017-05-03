@@ -37,7 +37,7 @@ Interested? [Install it](#installation) now and [get started by examples](#getti
 
 Are you a Python programmer? Then check out [the source](https://github.com/soimort/you-get) and fork it!
 
-![](http://i.imgur.com/GfthFAz.png)
+![](https://i.imgur.com/GfthFAz.png)
 
 ## Installation
 
@@ -128,7 +128,7 @@ $ you-get https://github.com/soimort/you-get/archive/master.zip
 or use [chocolatey package manager](https://chocolatey.org):
 
 ```
-> choco upgrade you-get 
+> choco upgrade you-get
 ```
 
 In order to get the latest ```develop``` branch without messing up the PIP, you can try:
@@ -339,6 +339,7 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | **Tumblr**  | <https://www.tumblr.com/>     |✓|✓|✓|
 | TED         | <http://www.ted.com/>         |✓| | |
 | SoundCloud  | <https://soundcloud.com/>     | | |✓|
+| SHOWROOM    | <https://www.showroom-live.com/> |✓| | |
 | Pinterest   | <https://www.pinterest.com/>  | |✓| |
 | MusicPlayOn | <http://en.musicplayon.com/>  |✓| | |
 | MTV81       | <http://www.mtv81.com/>       |✓| | |
@@ -346,7 +347,6 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | Metacafe    | <http://www.metacafe.com/>    |✓| | |
 | Magisto     | <http://www.magisto.com/>     |✓| | |
 | Khan Academy | <https://www.khanacademy.org/> |✓| | |
-| JPopsuki TV | <http://www.jpopsuki.tv/>     |✓| | |
 | Internet Archive | <https://archive.org/>   |✓| | |
 | **Instagram** | <https://instagram.com/>    |✓|✓| |
 | InfoQ       | <http://www.infoq.com/presentations/> |✓| | |
@@ -372,7 +372,7 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | 爆米花网 | <http://www.baomihua.com/>     |✓| | |
 | **bilibili<br/>哔哩哔哩** | <http://www.bilibili.com/> |✓| | |
 | Dilidili | <http://www.dilidili.com/>     |✓| | |
-| 豆瓣     | <http://www.douban.com/>       | | |✓|
+| 豆瓣     | <http://www.douban.com/>       |✓| |✓|
 | 斗鱼     | <http://www.douyutv.com/>      |✓| | |
 | Panda<br/>熊猫 | <http://www.panda.tv/>      |✓| | |
 | 凤凰视频 | <http://v.ifeng.com/>          |✓| | |
@@ -391,11 +391,8 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | 齐鲁网   | <http://v.iqilu.com/>          |✓| | |
 | QQ<br/>腾讯视频 | <http://v.qq.com/>      |✓| | |
 | 企鹅直播 | <http://live.qq.com/>          |✓| | |
-| 阡陌视频 | <http://qianmo.com/>           |✓| | |
-| THVideo  | <http://thvideo.tv/>           |✓| | |
 | Sina<br/>新浪视频<br/>微博秒拍视频 | <http://video.sina.com.cn/><br/><http://video.weibo.com/> |✓| | |
 | Sohu<br/>搜狐视频 | <http://tv.sohu.com/> |✓| | |
-| 天天动听 | <http://www.dongting.com/>     | | |✓|
 | **Tudou<br/>土豆** | <http://www.tudou.com/> |✓| | |
 | 虾米     | <http://www.xiami.com/>        | | |✓|
 | 阳光卫视 | <http://www.isuntv.com/>       |✓| | |
@@ -406,6 +403,8 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | 花瓣     | <http://huaban.com/>           | |✓| |
 | Naver<br/>네이버 | <http://tvcast.naver.com/>     |✓| | |
 | 芒果TV   | <http://www.mgtv.com/>         |✓| | |
+| 火猫TV   | <http://www.huomao.com/>         |✓| | |
+| 全民Tv   | <http://www.quanmin.tv/>         |✓| | |
 
 For all other sites not on the list, the universal extractor will take care of finding and downloading interesting resources from the page.
 
