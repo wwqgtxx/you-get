@@ -75,6 +75,7 @@ SITES = {
     'tumblr'           : 'tumblr',
     'twimg'            : 'twitter',
     'twitter'          : 'twitter',
+    'ucas'             : 'ucas',
     'videomega'        : 'videomega',
     'vidto'            : 'vidto',
     'vimeo'            : 'vimeo',
@@ -479,6 +480,9 @@ def url_locations(urls, faker = False, headers = {}):
     return locations
 
 def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, headers = {}, timeout = None, **kwargs):
+#When a referer specified with param refer, the key must be 'Referer' for the hack here
+    if refer is not None:
+        headers['Referer'] = refer
     file_size = url_size(url, faker = faker, headers = headers)
 
     if os.path.exists(filepath):
@@ -518,8 +522,7 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
             headers = headers
         else:
             headers = {}
-        if received:
-            headers['Range'] = 'bytes=' + str(received) + '-'
+        headers['Range'] = 'bytes=' + str(received) + '-'
         if refer:
             headers['Referer'] = refer
 
@@ -1410,7 +1413,7 @@ def url_to_module(url):
         video_host = r1(r'https?://([^/]+)/', url)
         video_url = r1(r'https?://[^/]+(.*)', url)
 
-    if video_host.endswith('.com.cn'):
+    if video_host.endswith('.com.cn') or video_host.endswith('.ac.cn'):
         video_host = video_host[:-3]
     domain = r1(r'(\.[^.]+\.[^.]+)$', video_host) or video_host
     assert domain, 'unsupported url: ' + url
