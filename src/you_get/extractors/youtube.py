@@ -142,9 +142,9 @@ class YouTube(VideoExtractor):
 
         video_info = parse.parse_qs(get_content('https://www.youtube.com/get_video_info?video_id={}'.format(self.vid)))
 
+        ytplayer_config = None
         if 'status' not in video_info:
             log.wtf('[Failed] Unknown status.')
-
         elif video_info['status'] == ['ok']:
             if 'use_cipher_signature' not in video_info or video_info['use_cipher_signature'] == ['False']:
                 self.title = parse.unquote_plus(video_info['title'][0])
@@ -199,7 +199,7 @@ class YouTube(VideoExtractor):
             log.wtf('[Failed] Invalid status.')
 
         # YouTube Live
-        if ytplayer_config['args'].get('livestream') == '1' or ytplayer_config['args'].get('live_playback') == '1':
+        if ytplayer_config and (ytplayer_config['args'].get('livestream') == '1' or ytplayer_config['args'].get('live_playback') == '1'):
             hlsvp = ytplayer_config['args']['hlsvp']
 
             if 'info_only' in kwargs and kwargs['info_only']:
@@ -224,14 +224,10 @@ class YouTube(VideoExtractor):
 
         # Prepare caption tracks
         try:
-            caption_tracks = ytplayer_config['args']['caption_tracks'].split(',')
+            caption_tracks = json.loads(ytplayer_config['args']['player_response'])['captions']['playerCaptionsTracklistRenderer']['captionTracks']
             for ct in caption_tracks:
-                lang = None
-                for i in ct.split('&'):
-                    [k, v] = i.split('=')
-                    if k == 'lc' and lang is None: lang = v
-                    if k == 'v' and v[0] != '.': lang = v # auto-generated
-                    if k == 'u': ttsurl = parse.unquote_plus(v)
+                ttsurl, lang = ct['baseUrl'], ct['languageCode']
+
                 tts_xml = parseString(get_content(ttsurl))
                 transcript = tts_xml.getElementsByTagName('transcript')[0]
                 texts = transcript.getElementsByTagName('text')
@@ -328,6 +324,8 @@ class YouTube(VideoExtractor):
                                   parse.unquote(i.split('=')[1]))
                                  for i in afmt.split('&')])
                            for afmt in ytplayer_config['args']['adaptive_fmts'].split(',')]
+                for stream in streams: # get over speed limiting
+                    stream['url'] += '&ratebypass=yes'
                 for stream in streams: # audio
                     if stream['type'].startswith('audio/mp4'):
                         dash_mp4_a_url = stream['url']
