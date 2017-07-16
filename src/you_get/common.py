@@ -545,7 +545,8 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
             headers = headers
         else:
             headers = {}
-        headers['Range'] = 'bytes=' + str(received) + '-'
+        if received:
+            headers['Range'] = 'bytes=' + str(received) + '-'
         if refer:
             headers['Referer'] = refer
 
@@ -996,7 +997,7 @@ def download_rtmp_url(url,title, ext,params={}, total_size=0, output_dir='.', re
     assert has_rtmpdump_installed(), "RTMPDump not installed."
     download_rtmpdump_stream(url,  title, ext,params, output_dir)
 
-def download_url_ffmpeg(url,title, ext,params={}, total_size=0, output_dir='.', refer=None, merge=True, faker=False):
+def download_url_ffmpeg(url,title, ext,params={}, total_size=0, output_dir='.', refer=None, merge=True, faker=False, stream=True):
     assert url
     if dry_run:
         print('Real URL:\n%s\n' % [url])
@@ -1019,7 +1020,7 @@ def download_url_ffmpeg(url,title, ext,params={}, total_size=0, output_dir='.', 
 
     title = tr(get_filename(title))
 
-    ffmpeg_download_stream(url, title, ext, params, output_dir)
+    ffmpeg_download_stream(url, title, ext, params, output_dir, stream=stream)
 
 def playlist_not_supported(name):
     def f(*args, **kwargs):
