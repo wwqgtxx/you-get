@@ -1215,7 +1215,7 @@ def script_main(script_name, download, download_playlist, **kwargs):
     -t | --timeout <SECONDS>            Set socket timeout.
     -d | --debug                        Show traceback and other debug info.
     -I | --input-file                   Read non-playlist urls from file.
-    -P | --password <PASSWORD>               Set video visit password to PASSWORD.
+    -P | --password <PASSWORD>          Set video visit password to PASSWORD.
     '''
 
     short_opts = 'Vhfiuc:ndF:O:o:p:x:y:s:t:I:P:'
