@@ -339,11 +339,14 @@ def get_location(url):
     return response.geturl()
 
 def urlopen_with_retry(*args, **kwargs):
-    for i in range(10):
+    for i in range(2):
         try:
             return request.urlopen(*args, **kwargs)
         except socket.timeout:
             logging.debug('request attempt %s timeout' % str(i + 1))
+# try to tackle youku CDN fails
+        except error.HTTPError as http_error:
+            logging.debug('HTTP Error with code{}'.format(http_error.code))
 
 def get_content(url, headers={}, decoded=True):
     """Gets the content of a URL via sending a HTTP GET request.
@@ -519,11 +522,13 @@ def url_locations(urls, faker = False, headers = {}):
         locations.append(response.url)
     return locations
 
-def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, headers = {}, timeout = None, **kwargs):
-#When a referer specified with param refer, the key must be 'Referer' for the hack here
+
+def url_save(url, filepath, bar, refer=None, is_part=False, faker=False, headers=None, timeout=None, **kwargs):
+    tmp_headers = headers.copy() if headers is not None else {}
+# When a referer specified with param refer, the key must be 'Referer' for the hack here
     if refer is not None:
-        headers['Referer'] = refer
-    file_size = url_size(url, faker = faker, headers = headers)
+        tmp_headers['Referer'] = refer
+    file_size = url_size(url, faker=faker, headers=tmp_headers)
 
     if os.path.exists(filepath):
         if not force and file_size == os.path.getsize(filepath):
@@ -557,20 +562,23 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
 
     if received < file_size:
         if faker:
-            headers = fake_headers
+            tmp_headers = fake_headers
+        '''
+        if parameter headers passed in, we have it copied as tmp_header
         elif headers:
             headers = headers
         else:
             headers = {}
+        '''
         if received:
-            headers['Range'] = 'bytes=' + str(received) + '-'
+            tmp_headers['Range'] = 'bytes=' + str(received) + '-'
         if refer:
-            headers['Referer'] = refer
+            tmp_headers['Referer'] = refer
 
         if timeout:
-            response = urlopen_with_retry(request.Request(url, headers=headers), timeout=timeout)
+            response = urlopen_with_retry(request.Request(url, headers=tmp_headers), timeout=timeout)
         else:
-            response = urlopen_with_retry(request.Request(url, headers=headers))
+            response = urlopen_with_retry(request.Request(url, headers=tmp_headers))
         try:
             range_start = int(response.headers['content-range'][6:].split('/')[0].split('-')[0])
             end_length = int(response.headers['content-range'][6:].split('/')[1])
@@ -592,8 +600,8 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
                     if received == file_size: # Download finished
                         break
                     else: # Unexpected termination. Retry request
-                        headers['Range'] = 'bytes=' + str(received) + '-'
-                        response = urlopen_with_retry(request.Request(url, headers=headers))
+                        tmp_headers['Range'] = 'bytes=' + str(received) + '-'
+                        response = urlopen_with_retry(request.Request(url, headers=tmp_headers))
                 output.write(buffer)
                 received += len(buffer)
                 if bar:
@@ -605,76 +613,6 @@ def url_save(url, filepath, bar, refer = None, is_part = False, faker = False, h
         os.remove(filepath) # on Windows rename could fail if destination filepath exists
     os.rename(temp_filepath, filepath)
 
-def url_save_chunked(url, filepath, bar, dyn_callback=None, chunk_size=0, ignore_range=False, refer=None, is_part=False, faker=False, headers={}):
-    def dyn_update_url(received):
-        if callable(dyn_callback):
-            logging.debug('Calling callback %s for new URL from %s' % (dyn_callback.__name__, received))
-            return dyn_callback(received)
-    if os.path.exists(filepath):
-        if not force:
-            if not is_part:
-                if bar:
-                    bar.done()
-                print('Skipping %s: file already exists' % tr(os.path.basename(filepath)))
-            else:
-                if bar:
-                    bar.update_received(os.path.getsize(filepath))
-            return
-        else:
-            if not is_part:
-                if bar:
-                    bar.done()
-                print('Overwriting %s' % tr(os.path.basename(filepath)), '...')
-    elif not os.path.exists(os.path.dirname(filepath)):
-        os.mkdir(os.path.dirname(filepath))
-
-    temp_filepath = filepath + '.download'
-    received = 0
-    if not force:
-        open_mode = 'ab'
-
-        if os.path.exists(temp_filepath):
-            received += os.path.getsize(temp_filepath)
-            if bar:
-                bar.update_received(os.path.getsize(temp_filepath))
-    else:
-        open_mode = 'wb'
-
-    if faker:
-        headers = fake_headers
-    elif headers:
-        headers = headers
-    else:
-        headers = {}
-    if received:
-        url = dyn_update_url(received)
-        if not ignore_range:
-            headers['Range'] = 'bytes=' + str(received) + '-'
-    if refer:
-        headers['Referer'] = refer
-
-    response = urlopen_with_retry(request.Request(url, headers=headers))
-
-    with open(temp_filepath, open_mode) as output:
-        this_chunk = received
-        while True:
-            buffer = response.read(1024 * 256)
-            if not buffer:
-                break
-            output.write(buffer)
-            received += len(buffer)
-            if chunk_size and (received - this_chunk) >= chunk_size:
-                url = dyn_callback(received)
-                this_chunk = received
-                response = urlopen_with_retry(request.Request(url, headers=headers))
-            if bar:
-                bar.update_received(len(buffer))
-
-    assert received == os.path.getsize(temp_filepath), '%s == %s == %s' % (received, os.path.getsize(temp_filepath))
-
-    if os.access(filepath, os.W_OK):
-        os.remove(filepath) # on Windows rename could fail if destination filepath exists
-    os.rename(temp_filepath, filepath)
 
 class SimpleProgressBar:
     term_size = term.get_terminal_size()[1]
@@ -918,84 +856,6 @@ def download_urls(urls, title, ext, total_size, output_dir='.', refer=None, merg
 
     print()
 
-def download_urls_chunked(urls, title, ext, total_size, output_dir='.', refer=None, merge=True, faker=False, headers = {}, **kwargs):
-    assert urls
-    if dry_run:
-        print('Real URLs:\n%s\n' % urls)
-        return
-
-    if player:
-        launch_player(player, urls)
-        return
-
-    title = tr(get_filename(title))
-
-    filename = '%s.%s' % (title, ext)
-    filepath = os.path.join(output_dir, filename)
-    if total_size:
-        if not force and os.path.exists(filepath[:-3] + '.mkv'):
-            print('Skipping %s: file already exists' % filepath[:-3] + '.mkv')
-            print()
-            return
-        bar = SimpleProgressBar(total_size, len(urls))
-    else:
-        bar = PiecesProgressBar(total_size, len(urls))
-
-    if len(urls) == 1:
-        parts = []
-        url = urls[0]
-        print('Downloading %s ...' % tr(filename))
-        filepath = os.path.join(output_dir, filename)
-        parts.append(filepath)
-        url_save_chunked(url, filepath, bar, refer = refer, faker = faker, headers = headers, **kwargs)
-        bar.done()
-
-        if not merge:
-            print()
-            return
-        if ext == 'ts':
-            from .processor.ffmpeg import has_ffmpeg_installed
-            if has_ffmpeg_installed():
-                from .processor.ffmpeg import ffmpeg_convert_ts_to_mkv
-                if ffmpeg_convert_ts_to_mkv(parts, os.path.join(output_dir, title + '.mkv')):
-                    for part in parts:
-                        os.remove(part)
-                else:
-                    os.remove(os.path.join(output_dir, title + '.mkv'))
-            else:
-                print('No ffmpeg is found. Conversion aborted.')
-        else:
-            print("Can't convert %s files" % ext)
-    else:
-        parts = []
-        print('Downloading %s.%s ...' % (tr(title), ext))
-        for i, url in enumerate(urls):
-            filename = '%s[%02d].%s' % (title, i, ext)
-            filepath = os.path.join(output_dir, filename)
-            parts.append(filepath)
-            #print 'Downloading %s [%s/%s]...' % (tr(filename), i + 1, len(urls))
-            bar.update_piece(i + 1)
-            url_save_chunked(url, filepath, bar, refer = refer, is_part = True, faker = faker, headers = headers)
-        bar.done()
-
-        if not merge:
-            print()
-            return
-        if ext == 'ts':
-            from .processor.ffmpeg import has_ffmpeg_installed
-            if has_ffmpeg_installed():
-                from .processor.ffmpeg import ffmpeg_concat_ts_to_mkv
-                if ffmpeg_concat_ts_to_mkv(parts, os.path.join(output_dir, title + '.mkv')):
-                    for part in parts:
-                        os.remove(part)
-                else:
-                    os.remove(os.path.join(output_dir, title + '.mkv'))
-            else:
-                print('No ffmpeg is found. Merging aborted.')
-        else:
-            print("Can't merge %s files" % ext)
-
-    print()
 
 def download_rtmp_url(url,title, ext,params={}, total_size=0, output_dir='.', refer=None, merge=True, faker=False):
     assert url
@@ -1194,12 +1054,9 @@ def print_more_compatible(*args, **kwargs):
     return ret
 
 
-
 def download_main(download, download_playlist, urls, playlist, **kwargs):
     for url in urls:
-        if url.startswith('https://'):
-            url = url[8:]
-        if not url.startswith('http://'):
+        if re.match(r'https?://', url) is None:
             url = 'http://' + url
 
         if playlist:
@@ -1463,7 +1320,7 @@ def url_to_module(url):
         video_host = r1(r'https?://([^/]+)/', url)
         video_url = r1(r'https?://[^/]+(.*)', url)
         assert video_host and video_url
-    except:
+    except AssertionError:
         url = google_search(url)
         video_host = r1(r'https?://([^/]+)/', url)
         video_url = r1(r'https?://[^/]+(.*)', url)
@@ -1478,7 +1335,11 @@ def url_to_module(url):
         return import_module('.'.join(['you_get', 'extractors', SITES[k]])), url
     else:
         import http.client
-        conn = http.client.HTTPConnection(video_host)
+        video_host = r1(r'https?://([^/]+)/', url) # .cn could be removed
+        if url.startswith('https://'):
+            conn = http.client.HTTPSConnection(video_host)
+        else:
+            conn = http.client.HTTPConnection(video_host)
         conn.request("HEAD", video_url, headers=fake_headers)
         res = conn.getresponse()
         location = res.getheader('location')
