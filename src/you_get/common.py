@@ -93,6 +93,7 @@ SITES = {
     'miaopai'          : 'yixia',
     'yizhibo'          : 'yizhibo',
     'youku'            : 'youku',
+    'iwara'            : 'iwara',
     'youtu'            : 'youtube',
     'youtube'          : 'youtube',
     'zhanqi'           : 'zhanqi',
@@ -1101,6 +1102,7 @@ def script_main(script_name, download, download_playlist, **kwargs):
     -d | --debug                        Show traceback and other debug info.
     -I | --input-file                   Read non-playlist urls from file.
     -P | --password <PASSWORD>          Set video visit password to PASSWORD.
+    -l | --playlist                     Download a playlist.
     '''
 
     short_opts = 'Vhfiuc:ndF:O:o:p:x:y:s:t:I:P:'
