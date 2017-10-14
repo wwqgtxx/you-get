@@ -41,17 +41,27 @@ class Youku(VideoExtractor):
     mobile_ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
     dispatcher_url = 'vali.cp31.ott.cibntv.net'
 
-    # Last updated: 2015-11-24
+    # Last updated: 2017-10-13
     stream_types = [
-        {'id': 'mp4hd3', 'alias-of': 'hd3'},
-        {'id': 'hd3',    'container': 'flv', 'video_profile': '1080P'},
-        {'id': 'mp4hd2', 'alias-of': 'hd2'},
-        {'id': 'hd2',    'container': 'flv', 'video_profile': '超清'},
-        {'id': 'mp4hd',  'alias-of': 'mp4'},
-        {'id': 'mp4',    'container': 'mp4', 'video_profile': '高清'},
-        {'id': 'flvhd',  'container': 'flv', 'video_profile': '标清'},
-        {'id': 'flv',    'container': 'flv', 'video_profile': '标清'},
-        {'id': '3gphd',  'container': 'mp4', 'video_profile': '标清（3GP）'},
+        {'id': 'hd3',      'container': 'flv', 'video_profile': '1080P'},
+        {'id': 'hd3v2',    'container': 'flv', 'video_profile': '1080P'},
+        {'id': 'mp4hd3',   'container': 'mp4', 'video_profile': '1080P'},
+        {'id': 'mp4hd3v2', 'container': 'mp4', 'video_profile': '1080P'},
+
+        {'id': 'hd2',      'container': 'flv', 'video_profile': '超清'},
+        {'id': 'hd2v2',    'container': 'flv', 'video_profile': '超清'},
+        {'id': 'mp4hd2',   'container': 'mp4', 'video_profile': '超清'},
+        {'id': 'mp4hd2v2', 'container': 'mp4', 'video_profile': '超清'},
+
+        {'id': 'mp4hd',    'container': 'mp4', 'video_profile': '高清'},
+        # not really equivalent to mp4hd
+        {'id': 'flvhd',    'container': 'flv', 'video_profile': '渣清'},
+        {'id': '3gphd',    'container': 'mp4', 'video_profile': '渣清'},
+
+        {'id': 'mp4sd',    'container': 'mp4', 'video_profile': '标清'},
+        # obsolete?
+        {'id': 'flv',      'container': 'flv', 'video_profile': '标清'},
+        {'id': 'mp4',      'container': 'mp4', 'video_profile': '标清'},
     ]
 
     def __init__(self):
@@ -144,7 +154,7 @@ class Youku(VideoExtractor):
                     log.wtf('Cannot fetch vid')
 
         if kwargs.get('src') and kwargs['src'] == 'tudou':
-            self.ccode = '0402'
+            self.ccode = '050F'
 
         if kwargs.get('password') and kwargs['password']:
             self.password_protected = True

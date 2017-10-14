@@ -394,7 +394,7 @@ Use `--url`/`-u` to get a list of downloadable resource URLs extracted from the 
 | Sina<br/>新浪视频<br/>微博秒拍视频 | <http://video.sina.com.cn/><br/><http://video.weibo.com/> |✓| | |
 | Sohu<br/>搜狐视频 | <http://tv.sohu.com/> |✓| | |
 | **Tudou<br/>土豆** | <http://www.tudou.com/> |✓| | |
-| 虾米     | <http://www.xiami.com/>        | | |✓|
+| 虾米     | <http://www.xiami.com/>        |✓| |✓|
 | 阳光卫视 | <http://www.isuntv.com/>       |✓| | |
 | **音悦Tai** | <http://www.yinyuetai.com/> |✓| | |
 | **Youku<br/>优酷** | <http://www.youku.com/> |✓| | |
@@ -448,6 +448,6 @@ We only ship the code here, and how you are going to use it is left to your own 
 
 ## Authors
 
-Made by [@soimort](https://github.com/soimort), who is in turn powered by :coffee:, :pizza: and :ramen:.
+Made by [@soimort](https://github.com/soimort), who is in turn powered by :coffee:, :beer: and :ramen:.
 
 You can find the [list of all contributors](https://github.com/soimort/you-get/graphs/contributors) here.

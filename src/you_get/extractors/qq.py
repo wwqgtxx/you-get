@@ -13,8 +13,6 @@ def qq_download_by_vid(vid, title, output_dir='.', merge=True, info_only=False):
     info = get_content(info_api)
     video_json = json.loads(match1(info, r'QZOutputJson=(.*)')[:-1])
 
-    if video_json['exem'] != 0:
-        log.wtf(video_json['msg'])
     fn_pre = video_json['vl']['vi'][0]['lnk']
     title = video_json['vl']['vi'][0]['ti']
     host = video_json['vl']['vi'][0]['ul']['ui'][0]['url']
@@ -29,7 +27,10 @@ def qq_download_by_vid(vid, title, output_dir='.', merge=True, info_only=False):
     part_urls= []
     total_size = 0
     for part in range(1, seg_cnt+1):
-        filename = fn_pre + '.p' + str(part_format_id % 10000) + '.' + str(part) + '.mp4'
+        if seg_cnt == 1 and video_json['vl']['vi'][0]['vh'] <= 480:
+            filename = fn_pre + '.mp4'
+        else:
+            filename = fn_pre + '.p' + str(part_format_id % 10000) + '.' + str(part) + '.mp4'
         key_api = "http://vv.video.qq.com/getkey?otype=json&platform=11&format={}&vid={}&filename={}&appver=3.2.19.333".format(part_format_id, vid, filename)
         part_info = get_content(key_api)
         key_json = json.loads(match1(part_info, r'QZOutputJson=(.*)')[:-1])
@@ -63,7 +64,7 @@ def kg_qq_download_by_shareid(shareid, output_dir='.', info_only=False, caption=
     real_url = real_url.replace('\/', '/')
 
     ksong_mid = json_data['data']['ksong_mid']
-    lyric_url = 'http://cgi.kg.qq.com/fcgi-bin/fcg_lyric?jsonpCallback=jsopgetlrcdata&outCharset=utf-8&ksongmid=' + ksong_mid 
+    lyric_url = 'http://cgi.kg.qq.com/fcgi-bin/fcg_lyric?jsonpCallback=jsopgetlrcdata&outCharset=utf-8&ksongmid=' + ksong_mid
     lyric_data = get_content(lyric_url)
     lyric_string = lyric_data[len('jsopgetlrcdata('):-1]
     lyric_json = json.loads(lyric_string)
