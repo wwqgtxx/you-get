@@ -104,7 +104,8 @@ class Bilibili(VideoExtractor):
                 self.parse_bili_xml(api_xml)
 
     def prepare(self, **kwargs):
-        socket.setdefaulttimeout(1) # fail fast, very speedy!
+        if socket.getdefaulttimeout() == 600: # no timeout specified
+            socket.setdefaulttimeout(2) # fail fast, very speedy!
 
         # handle "watchlater" URLs
         if '/watchlater/' in self.url:
@@ -123,13 +124,17 @@ class Bilibili(VideoExtractor):
                 self.url = 'http://www.bilibili.com/video/av{}/index_{}.html'.format(aid, page)
         self.referer = self.url
         self.page = get_content(self.url)
-        try:
-            self.title = re.search(r'<h1\s*title="([^"]+)"', self.page).group(1)
-            if 'subtitle' in kwargs:
-                subtitle = kwargs['subtitle']
-                self.title = '{} {}'.format(self.title, subtitle)
-        except Exception:
-            pass
+
+        m = re.search(r'<h1\s*title="([^"]+)"', self.page)
+        if m is not None:
+            self.title = m.group(1)
+        if self.title is None:
+            m = re.search(r'<meta property="og:title" content="([^"]+)">', self.page)
+            if m is not None:
+                self.title = m.group(1)
+        if 'subtitle' in kwargs:
+            subtitle = kwargs['subtitle']
+            self.title = '{} {}'.format(self.title, subtitle)
 
         if 'bangumi.bilibili.com/movie' in self.url:
             self.movie_entry(**kwargs)
