@@ -78,7 +78,7 @@ class Youku(VideoExtractor):
         self.api_error_code = None
         self.api_error_msg = None
 
-        self.ccode = '0401'
+        self.ccode = '0502'
         self.utid = None
 
     def youku_ups(self):
