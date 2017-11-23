@@ -154,7 +154,7 @@ class Youku(VideoExtractor):
                     log.wtf('Cannot fetch vid')
 
         if kwargs.get('src') and kwargs['src'] == 'tudou':
-            self.ccode = '050F'
+            self.ccode = '0502'
 
         if kwargs.get('password') and kwargs['password']:
             self.password_protected = True
