@@ -15,6 +15,7 @@ from .coub import *
 from .dailymotion import *
 from .dilidili import *
 from .douban import *
+from .douyin import *
 from .douyutv import *
 from .ehow import *
 from .facebook import *
@@ -85,3 +86,4 @@ from .youtube import *
 from .ted import *
 from .khan import *
 from .zhanqi import *
+from .kuaishou import *
