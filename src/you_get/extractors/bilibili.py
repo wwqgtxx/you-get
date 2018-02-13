@@ -68,7 +68,7 @@ class Bilibili(VideoExtractor):
             chksum = hashlib.md5(bytes(params_str+self.SEC2, 'utf8')).hexdigest()
             api_url = self.bangumi_api_url + params_str + '&sign=' + chksum
 
-        xml_str = get_content(api_url)
+        xml_str = get_content(api_url, headers={'referer': self.url, 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36'})
         return xml_str
 
     def parse_bili_xml(self, xml_str):
@@ -125,11 +125,11 @@ class Bilibili(VideoExtractor):
         self.referer = self.url
         self.page = get_content(self.url)
 
-        m = re.search(r'<h1.*?>(.*?)</h1>', self.page)
+        m = re.search(r'<h1.*?>(.*?)</h1>', self.page) or re.search(r'<h1 title="([^"]+)">', self.page)
         if m is not None:
             self.title = m.group(1)
         if self.title is None:
-            m = re.search(r'<meta property="og:title" content="([^"]+)">', self.page)
+            m = re.search(r'property="og:title" content="([^"]+)"', self.page)
             if m is not None:
                 self.title = m.group(1)
         if 'subtitle' in kwargs:
