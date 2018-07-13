@@ -37,15 +37,16 @@ if sys.version_info[0] == 3:
             __slots__ = ("data", "headers", "url")
 
 
-        def get_response(url, faker=False, headers=None, get_method=None, no_logging=False):
+        def get_response(url, faker=False, headers=None, get_method=None, without_data=False, no_logging=False):
             if not no_logging:
                 logging.debug('get_response: %s' % url)
 
-            bd = json.dumps({"url": url, "headers": headers, "cookies": you_get.common.cookies,
-                             "encoding": "response", "method": get_method}).encode("utf-8")
+            bd = json.dumps({"url": url, "headers": headers,
+                             "encoding": "response_without_data" if without_data else "response",
+                             "method": get_method}).encode("utf-8")
             resp = json.loads(_get(bd, True))
             response = Response()
-            response.data = base64.b64decode(resp["data"])
+            response.data = None if without_data else base64.b64decode(resp["data"])
             response.headers = resp["headers"]
             response.url = resp["url"]
             return response
@@ -78,14 +79,14 @@ if sys.version_info[0] == 3:
 
         def get_head(url, headers=None, get_method='HEAD'):
             logging.debug('get_head: %s' % url)
-            resp = get_response(url, headers=headers, get_method=get_method, no_logging=True)
+            resp = get_response(url, headers=headers, get_method=get_method, without_data=True, no_logging=True)
             return resp.headers
 
 
         def get_location(url, headers=None, get_method='HEAD'):
             logging.debug('get_location: %s' % url)
 
-            resp = get_response(url, headers=headers, get_method=get_method, no_logging=True)
+            resp = get_response(url, headers=headers, get_method=get_method, without_data=True, no_logging=True)
             return resp.url
 
 
@@ -93,14 +94,14 @@ if sys.version_info[0] == 3:
             locations = []
             for url in urls:
                 logging.debug('url_locations: %s' % url)
-                resp = get_response(url, headers=headers, no_logging=True)
+                resp = get_response(url, headers=headers, without_data=True, no_logging=True)
                 locations.append(resp.url)
             return locations
 
 
         def url_size(url, faker=False, headers=None):
             logging.debug('url_size: %s' % url)
-            response = get_response(url, headers=headers, no_logging=True)
+            response = get_response(url, headers=headers, without_data=True, no_logging=True)
 
             size = response.headers['content-length']
             return int(size) if size is not None else float('inf')
@@ -113,7 +114,7 @@ if sys.version_info[0] == 3:
         def url_info(url, faker=False, headers=None):
             logging.debug('url_info: %s' % url)
 
-            response = get_response(url, headers=headers, no_logging=True)
+            response = get_response(url, headers=headers, without_data=True, no_logging=True)
 
             headers = response.headers
 
