@@ -7,9 +7,180 @@ sys.path.insert(1, os.path.join(_filepath, _srcdir))
 
 if sys.version_info[0] == 3:
     import you_get
+
+    address = os.environ.get("address_get_url", None)
+    if address:
+        from multiprocessing.connection import Client, Connection
+        import logging
+        import json
+        import base64
+        import you_get.common
+
+        logging.root.setLevel(logging.DEBUG)
+
+        conn = Client(address=address)
+
+
+        def _get(bd, decoded=True):
+            try:
+                conn.send_bytes(bd)
+                resp = conn.recv_bytes()
+                if decoded:
+                    return resp.decode("utf-8")
+                else:
+                    return resp
+            except Exception:
+                sys.exit(0)
+
+
+        class Response(object):
+            __slots__ = ("data", "headers", "url")
+
+
+        def get_response(url, faker=False, headers=None, get_method=None, no_logging=False):
+            if not no_logging:
+                logging.debug('get_response: %s' % url)
+
+            bd = json.dumps({"url": url, "headers": headers, "cookies": you_get.common.cookies,
+                             "encoding": "response", "method": get_method}).encode("utf-8")
+            resp = json.loads(_get(bd, True))
+            response = Response()
+            response.data = base64.b64decode(resp["data"])
+            response.headers = resp["headers"]
+            response.url = resp["url"]
+            return response
+
+
+        def get_html(url, encoding=None, faker=False):
+            logging.debug('get_html: %s' % url)
+
+            bd = json.dumps({"url": url, "encoding": None, "cookies": you_get.common.cookies}).encode("utf-8")
+            return _get(bd, True)
+
+
+        def get_decoded_html(url, faker=False):
+            return get_html(url, faker)
+
+
+        def get_content(url, headers=None, decoded=True):
+            logging.debug('get_content: %s' % url)
+            bd = json.dumps({"url": url, "headers": headers, "cookies": you_get.common.cookies,
+                             "encoding": None if decoded else "raw"}).encode("utf-8")
+            return _get(bd, decoded)
+
+
+        def post_content(url, headers=None, post_data=None, decoded=True):
+            logging.debug('post_content: %s' % url)
+            bd = json.dumps({"url": url, "headers": headers, "data": post_data, "cookies": you_get.common.cookies,
+                             "encoding": None if decoded else "raw", "method": "POST"}).encode("utf-8")
+            return _get(bd, decoded)
+
+
+        def get_head(url, headers=None, get_method='HEAD'):
+            logging.debug('get_head: %s' % url)
+            resp = get_response(url, headers=headers, get_method=get_method, no_logging=True)
+            return resp.headers
+
+
+        def get_location(url, headers=None, get_method='HEAD'):
+            logging.debug('get_location: %s' % url)
+
+            resp = get_response(url, headers=headers, get_method=get_method, no_logging=True)
+            return resp.url
+
+
+        def url_locations(urls, faker=False, headers=None):
+            locations = []
+            for url in urls:
+                logging.debug('url_locations: %s' % url)
+                resp = get_response(url, headers=headers, no_logging=True)
+                locations.append(resp.url)
+            return locations
+
+
+        def url_size(url, faker=False, headers=None):
+            logging.debug('url_size: %s' % url)
+            response = get_response(url, headers=headers, no_logging=True)
+
+            size = response.headers['content-length']
+            return int(size) if size is not None else float('inf')
+
+
+        def urls_size(urls, faker=False, headers=None):
+            return sum([url_size(url, faker=faker, headers=headers) for url in urls])
+
+
+        def url_info(url, faker=False, headers=None):
+            logging.debug('url_info: %s' % url)
+
+            response = get_response(url, headers=headers, no_logging=True)
+
+            headers = response.headers
+
+            type = headers['content-type']
+            if type == 'image/jpg; charset=UTF-8' or type == 'image/jpg':
+                type = 'audio/mpeg'  # fix for netease
+            mapping = {
+                'video/3gpp': '3gp',
+                'video/f4v': 'flv',
+                'video/mp4': 'mp4',
+                'video/MP2T': 'ts',
+                'video/quicktime': 'mov',
+                'video/webm': 'webm',
+                'video/x-flv': 'flv',
+                'video/x-ms-asf': 'asf',
+                'audio/mp4': 'mp4',
+                'audio/mpeg': 'mp3',
+                'audio/wav': 'wav',
+                'audio/x-wav': 'wav',
+                'audio/wave': 'wav',
+                'image/jpeg': 'jpg',
+                'image/png': 'png',
+                'image/gif': 'gif',
+                'application/pdf': 'pdf',
+            }
+            if type in mapping:
+                ext = mapping[type]
+            else:
+                type = None
+                if headers['content-disposition']:
+                    try:
+                        filename = you_get.common.parse.unquote(
+                            you_get.common.r1(r'filename="?([^"]+)"?', headers['content-disposition'])
+                        )
+                        if len(filename.split('.')) > 1:
+                            ext = filename.split('.')[-1]
+                        else:
+                            ext = None
+                    except:
+                        ext = None
+                else:
+                    ext = None
+
+            if headers['transfer-encoding'] != 'chunked':
+                size = headers['content-length'] and int(headers['content-length'])
+            else:
+                size = None
+
+            return type, ext, size
+
+
+        you_get.common.get_response = get_response
+        you_get.common.get_html = get_html
+        you_get.common.get_decoded_html = get_decoded_html
+        you_get.common.get_content = get_content
+        you_get.common.post_content = post_content
+        you_get.common.get_head = get_head
+        you_get.common.get_location = get_location
+        you_get.common.url_locations = url_locations
+        you_get.common.url_size = url_size
+        you_get.common.urls_size = urls_size
+        you_get.common.url_info = url_info
+
     if __name__ == '__main__':
         you_get.main(repo_path=_filepath)
-else: # Python 2
+else:  # Python 2
     from you_get.util import log
+
     log.e("[fatal] Python 3 is required!")
     log.wtf("try to run this script using 'python3 you-get'.")

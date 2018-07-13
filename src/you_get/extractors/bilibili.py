@@ -298,7 +298,6 @@ def fetch_sid(cid, aid):
     for c in cookies:
         if c.domain == '.bilibili.com' and c.name == 'sid':
             return c.value
-    raise
 
 def collect_bangumi_epids(json_data):
     eps = json_data['episodes'][::-1]
