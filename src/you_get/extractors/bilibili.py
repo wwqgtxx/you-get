@@ -115,7 +115,7 @@ class Bilibili(VideoExtractor):
             self.url = 'http://www.bilibili.com/video/av{}/'.format(aid)
 
         self.ua = fake_headers['User-Agent']
-        self.url = url_locations([self.url])[0]
+        self.url = url_locations([self.url], faker=True)[0]
         frag = urllib.parse.urlparse(self.url).fragment
         # http://www.bilibili.com/video/av3141144/index_2.html#page=3
         if frag:
@@ -125,7 +125,7 @@ class Bilibili(VideoExtractor):
                 aid = re.search(r'av(\d+)', self.url).group(1)
                 self.url = 'http://www.bilibili.com/video/av{}/index_{}.html'.format(aid, page)
         self.referer = self.url
-        self.page = get_content(self.url)
+        self.page = get_content(self.url, headers=fake_headers)
 
         m = re.search(r'<h1.*?>(.*?)</h1>', self.page) or re.search(r'<h1 title="([^"]+)">', self.page)
         if m is not None:
@@ -144,11 +144,13 @@ class Bilibili(VideoExtractor):
         else:
             playinfo = re.search(r'__INITIAL_STATE__=(.*?);\(function\(\)', self.page)
             if playinfo is not None:
-                pages = json.loads(playinfo.group(1))['videoData']['pages']
-                if len(pages) > 1:
-                    qs = dict(parse.parse_qsl(urllib.parse.urlparse(self.url).query))
-                    page = pages[int(qs.get('p', 1)) - 1]
-                    self.title = '{} #{}. {}'.format(self.title, page['page'], page['part'])
+                jsonPlayinfo = json.loads(playinfo.group(1))
+                if 'videoData' in jsonPlayinfo:
+                    pages = jsonPlayinfo['videoData']['pages']
+                    if len(pages) > 1:
+                        qs = dict(parse.parse_qsl(urllib.parse.urlparse(self.url).query))
+                        page = pages[int(qs.get('p', 1)) - 1]
+                        self.title = '{} #{}. {}'.format(self.title, page['page'], page['part'])
 
         if 'bangumi.bilibili.com/movie' in self.url:
             self.movie_entry(**kwargs)
@@ -378,7 +380,7 @@ def download_video_from_favlist(url, **kwargs):
 
 
 def bilibili_download_playlist_by_url(url, **kwargs):
-    url = url_locations([url])[0]
+    url = url_locations([url], faker=True)[0]
     kwargs['playlist'] = True
     # a bangumi here? possible?
     if 'live.bilibili' in url:
