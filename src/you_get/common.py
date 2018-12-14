@@ -102,6 +102,7 @@ SITES = {
     'soundcloud'       : 'soundcloud',
     'ted'              : 'ted',
     'theplatform'      : 'theplatform',
+    'tiktok'           : 'tiktok',
     'tucao'            : 'tucao',
     'tudou'            : 'tudou',
     'tumblr'           : 'tumblr',
@@ -127,6 +128,7 @@ SITES = {
     'youtube'          : 'youtube',
     'zhanqi'           : 'zhanqi',
     'zhibo'            : 'zhibo',
+    'zhihu'            : 'zhihu',
 }
 
 dry_run = False

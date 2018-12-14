@@ -62,7 +62,7 @@ class YouTube(VideoExtractor):
         f1def = match1(js, r'function %s(\(\w+\)\{[^\{]+\})' % re.escape(f1)) or \
                 match1(js, r'\W%s=function(\(\w+\)\{[^\{]+\})' % re.escape(f1))
         f1def = re.sub(r'([$\w]+\.)([$\w]+\(\w+,\d+\))', r'\2', f1def)
-        f1def = 'function %s%s' % (f1, f1def)
+        f1def = 'function main_%s%s' % (f1, f1def)  # prefix to avoid potential namespace conflict
         code = tr_js(f1def)
         f2s = set(re.findall(r'([$\w]+)\(\w+,\d+\)', f1def))
         for f2 in f2s:
@@ -79,7 +79,7 @@ class YouTube(VideoExtractor):
 
         f1 = re.sub(r'(as|if|in|is|or)', r'_\1', f1)
         f1 = re.sub(r'\$', '_dollar', f1)
-        code = code + 'sig=%s(s)' % f1
+        code = code + 'sig=main_%s(s)' % f1  # prefix to avoid potential namespace conflict
         exec(code, globals(), locals())
         return locals()['sig']
 
@@ -144,7 +144,10 @@ class YouTube(VideoExtractor):
         for video in videos:
             vid = parse_query_param(video, 'v')
             index = parse_query_param(video, 'index')
-            self.__class__().download_by_url(self.__class__.get_url_from_vid(vid), index=index, **kwargs)
+            try:
+                self.__class__().download_by_url(self.__class__.get_url_from_vid(vid), index=index, **kwargs)
+            except:
+                pass
 
     def prepare(self, **kwargs):
         assert self.url or self.vid
@@ -160,7 +163,8 @@ class YouTube(VideoExtractor):
 
         ytplayer_config = None
         if 'status' not in video_info:
-            log.wtf('[Failed] Unknown status.')
+            log.wtf('[Failed] Unknown status.', exit_code=None)
+            raise
         elif video_info['status'] == ['ok']:
             if 'use_cipher_signature' not in video_info or video_info['use_cipher_signature'] == ['False']:
                 self.title = parse.unquote_plus(video_info['title'][0])
@@ -192,7 +196,8 @@ class YouTube(VideoExtractor):
                     ytplayer_config = json.loads(re.search('ytplayer.config\s*=\s*([^\n]+});ytplayer', video_page).group(1))
                 except:
                     msg = re.search('class="message">([^<]+)<', video_page).group(1)
-                    log.wtf('[Failed] "%s"' % msg.strip())
+                    log.wtf('[Failed] "%s"' % msg.strip(), exit_code=None)
+                    raise
 
                 if 'title' in ytplayer_config['args']:
                     # 150 Restricted from playback on certain sites
@@ -201,18 +206,22 @@ class YouTube(VideoExtractor):
                     self.html5player = 'https://www.youtube.com' + ytplayer_config['assets']['js']
                     stream_list = ytplayer_config['args']['url_encoded_fmt_stream_map'].split(',')
                 else:
-                    log.wtf('[Error] The uploader has not made this video available in your country.')
+                    log.wtf('[Error] The uploader has not made this video available in your country.', exit_code=None)
+                    raise
                     #self.title = re.search('<meta name="title" content="([^"]+)"', video_page).group(1)
                     #stream_list = []
 
             elif video_info['errorcode'] == ['100']:
-                log.wtf('[Failed] This video does not exist.', exit_code=int(video_info['errorcode'][0]))
+                log.wtf('[Failed] This video does not exist.', exit_code=None) #int(video_info['errorcode'][0])
+                raise
 
             else:
-                log.wtf('[Failed] %s' % video_info['reason'][0], exit_code=int(video_info['errorcode'][0]))
+                log.wtf('[Failed] %s' % video_info['reason'][0], exit_code=None) #int(video_info['errorcode'][0])
+                raise
 
         else:
-            log.wtf('[Failed] Invalid status.')
+            log.wtf('[Failed] Invalid status.', exit_code=None)
+            raise
 
         # YouTube Live
         if ytplayer_config and (ytplayer_config['args'].get('livestream') == '1' or ytplayer_config['args'].get('live_playback') == '1'):
