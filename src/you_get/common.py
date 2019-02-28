@@ -37,13 +37,11 @@ SITES = {
     'cbs'              : 'cbs',
     'coub'             : 'coub',
     'dailymotion'      : 'dailymotion',
-    'dilidili'         : 'dilidili',
     'douban'           : 'douban',
     'douyin'           : 'douyin',
     'douyu'            : 'douyutv',
     'ehow'             : 'ehow',
     'facebook'         : 'facebook',
-    'fantasy'          : 'fantasy',
     'fc2'              : 'fc2video',
     'flickr'           : 'flickr',
     'freesound'        : 'freesound',
@@ -51,7 +49,6 @@ SITES = {
     'google'           : 'google',
     'giphy'            : 'giphy',
     'heavy-music'      : 'heavymusic',
-    'huaban'           : 'huaban',
     'huomao'           : 'huomaotv',
     'iask'             : 'sina',
     'icourses'         : 'icourses',
@@ -94,7 +91,6 @@ SITES = {
     'pptv'             : 'pptv',
     'qingting'         : 'qingting',
     'qq'               : 'qq',
-    'quanmin'          : 'quanmin',
     'showroom-live'    : 'showroom',
     'sina'             : 'sina',
     'smgbb'            : 'bilibili',
@@ -442,7 +438,7 @@ def get_content(url, headers={}, decoded=True):
             response.getheader('Content-Type', ''), r'charset=([\w-]+)'
         )
         if charset is not None:
-            data = data.decode(charset)
+            data = data.decode(charset, 'ignore')
         else:
             data = data.decode('utf-8', 'ignore')
 
@@ -916,7 +912,10 @@ def download_urls(
         return
     if dry_run:
         print_user_agent(faker=faker)
-        print('Real URLs:\n%s' % '\n'.join(urls))
+        try:
+            print('Real URLs:\n%s' % '\n'.join(urls))
+        except:
+            print('Real URLs:\n%s' % '\n'.join([j for i in urls for j in i]))
         return
 
     if player:
