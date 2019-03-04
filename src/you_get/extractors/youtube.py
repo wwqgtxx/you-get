@@ -195,13 +195,29 @@ class YouTube(VideoExtractor):
 
         elif video_info['status'] == ['fail']:
             if video_info['errorcode'] == ['150']:
-                video_page = get_content('https://www.youtube.com/watch?v=%s' % self.vid)
+                if cookies:
+                    # Load necessary cookies into headers (for age-restricted videos)
+                    consent, ssid, hsid, sid = 'YES', '', '', ''
+                    for cookie in cookies:
+                        if cookie.domain.endswith('.youtube.com'):
+                            if cookie.name == 'SSID':
+                                ssid = cookie.value
+                            elif cookie.name == 'HSID':
+                                hsid = cookie.value
+                            elif cookie.name == 'SID':
+                                sid = cookie.value
+                    cookie_str = 'CONSENT=%s; SSID=%s; HSID=%s; SID=%s' % (consent, ssid, hsid, sid)
+
+                    video_page = get_content('https://www.youtube.com/watch?v=%s' % self.vid,
+                                             headers={'Cookie': cookie_str})
+                else:
+                    video_page = get_content('https://www.youtube.com/watch?v=%s' % self.vid)
+
                 try:
                     ytplayer_config = json.loads(re.search('ytplayer.config\s*=\s*([^\n]+});ytplayer', video_page).group(1))
                 except:
                     msg = re.search('class="message">([^<]+)<', video_page).group(1)
-                    log.wtf('[Failed] "%s"' % msg.strip(), exit_code=None)
-                    raise
+                    log.wtf('[Failed] Got message "%s". Try to login with --cookies.' % msg.strip())
 
                 if 'title' in ytplayer_config['args']:
                     # 150 Restricted from playback on certain sites
